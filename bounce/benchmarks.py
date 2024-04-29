@@ -1988,13 +1988,31 @@ class PoliBenchmark(SyntheticBenchmark):
         return torch.tensor(y)
 
     def build_parameters(self, f: AbstractBlackBox, sequence_length: int = None):
+        if f.info.is_discrete():
+            return self._build_discrete_parameters(f, sequence_length)
+        else:
+            return self._build_continuous_parameters(f)
+
+    def _build_continuous_parameters(self, f: ToyContinuousBlackBox):
+        lower_bound, upper_bound = f.bounds
+        return [
+            Parameter(
+                name=f"x{i}",
+                type=ParameterType.CONTINUOUS,
+                lower_bound=lower_bound,
+                upper_bound=upper_bound,
+            )
+            for i in range(f.n_dimensions)
+        ]
+    
+    def _build_discrete_parameters(self, f: AbstractBlackBox, sequence_length: int | None = None):
         if sequence_length is None:
             if not isinstance(f, ToyContinuousBlackBox):
                 sequence_length = f.info.max_sequence_length
 
                 assert sequence_length < float("inf")
-        if f.info.is_discrete():
-            return [
+        
+        return [
                 Parameter(
                     name=f"x{i}",
                     type=ParameterType.CATEGORICAL,
@@ -2002,15 +2020,4 @@ class PoliBenchmark(SyntheticBenchmark):
                     upper_bound=self.n_realizations - 1,
                 )
                 for i in range(sequence_length)
-            ]
-        else:
-            lower_bound, upper_bound = f.bounds
-            return [
-                Parameter(
-                    name=f"x{i}",
-                    type=ParameterType.CONTINUOUS,
-                    lower_bound=lower_bound,
-                    upper_bound=upper_bound,
-                )
-                for i in range(f.n_dimensions)
             ]
