@@ -1984,7 +1984,6 @@ class PoliBenchmark(SyntheticBenchmark):
         )
         y_ = [call_function(x_i) for x_i in x]
         y = np.vstack(y_)
-        print(y)
         return torch.tensor(y)
 
     def build_parameters(self, f: AbstractBlackBox, sequence_length: int = None):
